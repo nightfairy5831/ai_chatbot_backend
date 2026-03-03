@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
 from app.routers import auth, agents, products, prompts
 from app.models.product import Product  # noqa: F401 — ensure table is created
+from app.models.question import Question  # noqa: F401 — ensure table is created
 
 Base.metadata.create_all(bind=engine)
 

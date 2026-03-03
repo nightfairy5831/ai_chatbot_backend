@@ -7,6 +7,7 @@ from app.core.prompt_engine import generate_prompt
 from app.core.openai_service import chat_completion
 from app.models.user import User
 from app.models.agent import Agent
+from app.models.question import Question
 
 router = APIRouter(prefix="/api/agents/{agent_id}", tags=["prompts"])
 
@@ -47,5 +48,8 @@ def chat_with_agent(agent_id: int, data: ChatRequest, current_user: User = Depen
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get AI response")
+
+    db.add(Question(user_id=current_user.id, agent_id=agent.id, question=data.message))
+    db.commit()
 
     return ChatResponse(response=response, prompt_used=prompt)
