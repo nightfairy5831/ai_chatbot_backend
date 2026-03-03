@@ -1,12 +1,48 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.agent import Agent
+from app.models.product import Product
+from app.models.question import Question
 from app.schemas.agent import AgentCreate, AgentUpdate, AgentOut
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
+
+
+@router.get("/stats")
+def get_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_agents = db.query(Agent).filter(Agent.user_id == current_user.id)
+    agent_ids = [a.id for a in user_agents.all()]
+
+    total_agents = len(agent_ids)
+    total_products = db.query(func.count(Product.id)).filter(Product.agent_id.in_(agent_ids)).scalar() if agent_ids else 0
+    total_questions = db.query(func.count(Question.id)).filter(Question.user_id == current_user.id).scalar()
+
+    most_used = None
+    if agent_ids:
+        row = (
+            db.query(Question.agent_id, func.count(Question.id).label("cnt"))
+            .filter(Question.agent_id.in_(agent_ids))
+            .group_by(Question.agent_id)
+            .order_by(func.count(Question.id).desc())
+            .first()
+        )
+        if row:
+            agent = db.query(Agent).get(row.agent_id)
+            most_used = {"id": agent.id, "name": agent.name, "question_count": row.cnt}
+
+    recent = user_agents.order_by(Agent.created_at.desc()).first()
+
+    return {
+        "total_agents": total_agents,
+        "total_products": total_products,
+        "total_questions": total_questions,
+        "most_used_agent": most_used,
+        "recent_agent": {"id": recent.id, "name": recent.name} if recent else None,
+    }
 
 
 @router.get("/", response_model=list[AgentOut])
