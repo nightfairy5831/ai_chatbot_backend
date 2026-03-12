@@ -9,6 +9,7 @@ class AgentCreate(BaseModel):
     industry: str | None = None
     tone: str | None = "professional"
     instructions: str | None = None
+    sinstruction: str | None = None
 
 
 class AgentUpdate(BaseModel):
@@ -18,6 +19,7 @@ class AgentUpdate(BaseModel):
     industry: str | None = None
     tone: str | None = None
     instructions: str | None = None
+    sinstruction: str | None = None
 
 
 class AgentOut(BaseModel):
@@ -29,6 +31,7 @@ class AgentOut(BaseModel):
     industry: str | None = None
     tone: str | None = None
     instructions: str | None = None
+    sinstruction: str | None = None
     prompt_template: str | None = None
     products: list[ProductOut] = []
 
