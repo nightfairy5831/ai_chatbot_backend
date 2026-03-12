@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+import io
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.database import get_db
@@ -76,6 +77,55 @@ def update_agent(agent_id: int, data: AgentUpdate, current_user: User = Depends(
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(agent, field, value)
 
+    db.commit()
+    db.refresh(agent)
+    return agent
+
+
+@router.post("/{agent_id}/upload-sinstruction", response_model=AgentOut)
+async def upload_sinstruction(
+    agent_id: int,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    agent = db.query(Agent).filter(Agent.id == agent_id, Agent.user_id == current_user.id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    try:
+        import PyPDF2
+        content = await file.read()
+        reader = PyPDF2.PdfReader(io.BytesIO(content))
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() or ""
+        text = text.strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+        agent.sinstruction = text
+        db.commit()
+        db.refresh(agent)
+        return agent
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process PDF: {str(e)}")
+
+
+@router.delete("/{agent_id}/sinstruction", response_model=AgentOut)
+def delete_sinstruction(
+    agent_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    agent = db.query(Agent).filter(Agent.id == agent_id, Agent.user_id == current_user.id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    agent.sinstruction = None
     db.commit()
     db.refresh(agent)
     return agent

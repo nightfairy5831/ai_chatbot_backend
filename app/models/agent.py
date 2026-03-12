@@ -15,6 +15,7 @@ class Agent(Base):
     industry = Column(String, nullable=True)
     tone = Column(String, nullable=True, default="professional")
     instructions = Column(Text, nullable=True)
+    sinstruction = Column(Text, nullable=True)
     prompt_template = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

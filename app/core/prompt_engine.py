@@ -8,8 +8,13 @@ Industry: {{ industry }}.
 Communication style: {{ tone or "professional" }}.
 {% if instructions %}
 
-Special instructions:
+Custom instructions:
 {{ instructions }}
+{% endif %}
+{% if sinstruction %}
+
+Special instructions (from uploaded document):
+{{ sinstruction }}
 {% endif %}
 {% if products %}
 
@@ -34,5 +39,6 @@ def generate_prompt(agent, products=None) -> str:
         industry=agent.industry,
         tone=agent.tone,
         instructions=agent.instructions,
+        sinstruction=agent.sinstruction,
         products=products or [],
     )
