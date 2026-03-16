@@ -42,6 +42,8 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str
+    role: str = "client"
+    is_active: bool = True
 
     class Config:
         from_attributes = True
