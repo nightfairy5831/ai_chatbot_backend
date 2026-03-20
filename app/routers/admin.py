@@ -290,6 +290,50 @@ def activity_logs(
     ]
 
 
+# --- Token Usage ---
+
+@router.get("/token-usage/agents")
+def token_usage_by_agent(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    rows = (
+        db.query(
+            Agent.name.label("agent_name"),
+            User.username,
+            func.count(Question.id).label("questions"),
+            func.coalesce(func.sum(Question.token), 0).label("total_token"),
+        )
+        .join(User, Question.user_id == User.id)
+        .join(Agent, Question.agent_id == Agent.id)
+        .group_by(Agent.name, User.username)
+        .order_by(func.coalesce(func.sum(Question.token), 0).desc())
+        .all()
+    )
+    return [
+        {"agent_name": r.agent_name, "username": r.username, "questions": r.questions, "total_token": r.total_token}
+        for r in rows
+    ]
+
+
+@router.get("/token-usage/daily")
+def token_usage_daily(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    since = datetime.utcnow() - timedelta(days=30)
+    rows = (
+        db.query(
+            cast(Question.created_at, Date).label("date"),
+            func.coalesce(func.sum(Question.token), 0).label("total_token"),
+        )
+        .filter(Question.created_at >= since)
+        .group_by(cast(Question.created_at, Date))
+        .order_by(cast(Question.created_at, Date))
+        .all()
+    )
+    date_map = {str(r.date): r.total_token for r in rows}
+    result = []
+    for i in range(30):
+        d = (since + timedelta(days=i + 1)).strftime("%Y-%m-%d")
+        result.append({"date": d, "total_token": date_map.get(d, 0)})
+    return result
+
+
 # --- Live Test Chat ---
 
 @router.post("/agents/{agent_id}/chat", response_model=AdminChatResponse)
@@ -299,9 +343,9 @@ def admin_chat(agent_id: int, data: AdminChatRequest, admin: User = Depends(requ
         raise HTTPException(status_code=404, detail="Agent not found")
     prompt = generate_prompt(agent, agent.products)
     try:
-        response = chat_completion(prompt, data.message)
+        result = chat_completion(prompt, data.message)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get AI response")
-    return AdminChatResponse(response=response, prompt_used=prompt)
+    return AdminChatResponse(response=result["content"], prompt_used=prompt)

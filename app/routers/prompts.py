@@ -43,13 +43,17 @@ def chat_with_agent(agent_id: int, data: ChatRequest, current_user: User = Depen
     prompt = generate_prompt(agent, agent.products)
 
     try:
-        response = chat_completion(prompt, data.message)
+        result = chat_completion(prompt, data.message)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to get AI response")
 
-    db.add(Question(user_id=current_user.id, agent_id=agent.id, question=data.message))
+    question = Question(user_id=current_user.id, agent_id=agent.id, question=data.message)
+    db.add(question)
+    db.flush()
+
+    question.token = result["token"]
     db.commit()
 
-    return ChatResponse(response=response, prompt_used=prompt)
+    return ChatResponse(response=result["content"], prompt_used=prompt)
