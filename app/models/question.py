@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -12,6 +12,7 @@ class Question(Base):
     agent_id = Column(Integer, ForeignKey("agents.id"), nullable=False)
     question = Column(Text, nullable=False)
     token = Column(Integer, default=0)
+    source_channel = Column(String, nullable=False, server_default="web")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
