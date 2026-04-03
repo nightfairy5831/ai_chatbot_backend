@@ -14,6 +14,14 @@ with engine.connect() as conn:
         conn.execute(text("ALTER TABLE questions ADD COLUMN token INTEGER DEFAULT 0"))
         conn.commit()
 
+    product_columns = [c["name"] for c in inspect(engine).get_columns("products")]
+    if "type" not in product_columns:
+        conn.execute(text("ALTER TABLE products ADD COLUMN type VARCHAR DEFAULT 'product'"))
+        conn.commit()
+    if "purchase_link" not in product_columns:
+        conn.execute(text("ALTER TABLE products ADD COLUMN purchase_link VARCHAR"))
+        conn.commit()
+
 app = FastAPI(title="AI Chatbot SaaS")
 
 app.add_middleware(
