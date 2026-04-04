@@ -2,9 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, inspect
 from app.core.database import engine, Base
-from app.routers import auth, agents, products, prompts, admin
-from app.models.product import Product  # noqa: F401 — ensure table is created
-from app.models.question import Question  # noqa: F401 — ensure table is created
+from app.routers import auth, agents, products, prompts, admin, calendar
+from app.models.product import Product  # noqa: F401
+from app.models.question import Question  # noqa: F401
+from app.models.calendar_connection import CalendarConnection  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,6 +43,7 @@ app.include_router(agents.router)
 app.include_router(products.router)
 app.include_router(prompts.router)
 app.include_router(admin.router)
+app.include_router(calendar.router)
 
 
 @app.get("/api/health")
