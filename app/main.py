@@ -10,12 +10,10 @@ from app.models.calendar_connection import CalendarConnection  # noqa: F401
 Base.metadata.create_all(bind=engine)
 
 with engine.connect() as conn:
-    columns = [c["name"] for c in inspect(engine).get_columns("questions")]
-    if "token" not in columns:
+    question_columns = [c["name"] for c in inspect(engine).get_columns("questions")]
+    if "token" not in question_columns:
         conn.execute(text("ALTER TABLE questions ADD COLUMN token INTEGER DEFAULT 0"))
         conn.commit()
-
-    question_columns = [c["name"] for c in inspect(engine).get_columns("questions")]
     if "source_channel" not in question_columns:
         conn.execute(text("ALTER TABLE questions ADD COLUMN source_channel VARCHAR DEFAULT 'web'"))
         conn.commit()

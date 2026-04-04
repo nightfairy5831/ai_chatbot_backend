@@ -49,9 +49,8 @@ def refresh_access_token(refresh_token: str) -> str:
 
 def get_available_slots(refresh_token: str, date_str: str, calendar_id: str = "primary") -> list[dict]:
     access_token = refresh_access_token(refresh_token)
-    date = datetime.strptime(date_str, "%Y-%m-%d")
-    time_min = date.isoformat() + "T00:00:00Z"
-    time_max = date.isoformat() + "T23:59:59Z"
+    time_min = f"{date_str}T00:00:00Z"
+    time_max = f"{date_str}T23:59:59Z"
 
     with httpx.Client() as client:
         resp = client.get(
@@ -67,8 +66,11 @@ def get_available_slots(refresh_token: str, date_str: str, calendar_id: str = "p
         start = event.get("start", {}).get("dateTime")
         end = event.get("end", {}).get("dateTime")
         if start and end:
-            busy.append((datetime.fromisoformat(start), datetime.fromisoformat(end)))
+            s = datetime.fromisoformat(start).replace(tzinfo=None)
+            e = datetime.fromisoformat(end).replace(tzinfo=None)
+            busy.append((s, e))
 
+    date = datetime.strptime(date_str, "%Y-%m-%d")
     work_start = date.replace(hour=9, minute=0)
     work_end = date.replace(hour=17, minute=0)
     slots = []
