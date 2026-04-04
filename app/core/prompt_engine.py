@@ -20,7 +20,7 @@ Special instructions (from uploaded document):
 
 Products/Services catalog:
 {% for product in products %}
-- {{ product.name }}{% if product.price %} ({{ product.price }}){% endif %}{% if product.description %}: {{ product.description }}{% endif %}
+- [{{ product.type | upper }}] {{ product.name }}{% if product.price %} ({{ product.price }}){% endif %}{% if product.description %}: {{ product.description }}{% endif %}{% if product.purchase_link %} — Purchase link: {{ product.purchase_link }}{% endif %}
 
 {% endfor %}
 {% endif %}
@@ -29,7 +29,9 @@ Guidelines:
 - Answer customer questions accurately based on the information provided above.
 - If you don't know something, politely say so and offer to connect them with a human agent.
 - Stay in character and maintain the specified communication style.
-- Be helpful, concise, and professional.\
+- Be helpful, concise, and professional.
+- When a customer asks about a PRODUCT, provide details and share the purchase link if available.
+- When a customer asks about a SERVICE, offer to book an appointment if calendar is connected.\
 """)
 
 
