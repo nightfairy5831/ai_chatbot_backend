@@ -1,5 +1,5 @@
 import io
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.database import get_db
@@ -44,6 +44,29 @@ def get_stats(current_user: User = Depends(get_current_user), db: Session = Depe
         "most_used_agent": most_used,
         "recent_agent": {"id": recent.id, "name": recent.name} if recent else None,
     }
+
+
+@router.get("/logs")
+def user_activity_logs(
+    agent_id: int | None = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Question).filter(Question.user_id == current_user.id).join(Agent, Question.agent_id == Agent.id)
+    if agent_id:
+        q = q.filter(Question.agent_id == agent_id)
+    logs = q.order_by(Question.created_at.desc()).limit(100).all()
+    return [
+        {
+            "id": log.id,
+            "question": log.question,
+            "agent_name": log.agent.name,
+            "agent_id": log.agent_id,
+            "source_channel": log.source_channel,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        }
+        for log in logs
+    ]
 
 
 @router.get("/", response_model=list[AgentOut])
