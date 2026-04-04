@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.core import calendar_service
+from app.core.email_service import send_booking_confirmation
 from app.models.calendar_connection import CalendarConnection
 from app.models.agent import Agent
+from app.models.user import User
 from app.schemas.calendar import (
     CalendarConnectionOut, BookingRequest, BookingOut,
     AvailabilityRequest, TimeSlot,
@@ -125,6 +127,20 @@ def book_appointment(agent_id: int, req: BookingRequest, current_user=Depends(ge
     event = calendar_service.create_event(
         conn.google_refresh_token, req.date, req.time, summary, description, conn.calendar_id or "primary"
     )
+
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    owner = db.query(User).filter(User.id == conn.user_id).first()
+    if owner and owner.email:
+        send_booking_confirmation(
+            to_email=owner.email,
+            agent_name=agent.name if agent else "Agent",
+            customer_name=req.customer_name,
+            customer_email=req.customer_email,
+            customer_phone=req.customer_phone,
+            date=req.date,
+            time=req.time,
+            notes=req.notes,
+        )
 
     return BookingOut(
         event_id=event["id"],
