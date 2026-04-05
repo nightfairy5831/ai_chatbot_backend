@@ -26,7 +26,7 @@ def list_products(agent_id: int, current_user: User = Depends(get_current_user),
 @router.post("/", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
 def create_product(agent_id: int, data: ProductCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     get_user_agent(agent_id, current_user, db)
-    product = Product(name=data.name, description=data.description, price=data.price, agent_id=agent_id)
+    product = Product(name=data.name, description=data.description, price=data.price, type=data.type, purchase_link=data.purchase_link, agent_id=agent_id)
     db.add(product)
     db.commit()
     db.refresh(product)
