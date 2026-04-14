@@ -44,17 +44,19 @@ BOOKING_TOOLS = [
 ]
 
 
-def chat_completion(system_prompt: str, user_message: str) -> dict:
+def chat_completion(system_prompt: str, user_message: str, history: list[dict] = None) -> dict:
     if not client:
         raise ValueError("OpenAI API key is not configured")
 
     try:
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_message})
+
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            messages=messages,
             max_tokens=1024,
         )
         usage = response.usage
@@ -67,15 +69,15 @@ def chat_completion(system_prompt: str, user_message: str) -> dict:
         raise
 
 
-def chat_completion_with_tools(system_prompt: str, user_message: str, tool_handler=None) -> dict:
+def chat_completion_with_tools(system_prompt: str, user_message: str, tool_handler=None, history: list[dict] = None) -> dict:
     if not client:
         raise ValueError("OpenAI API key is not configured")
 
     try:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_message})
 
         response = client.chat.completions.create(
             model="gpt-4o",

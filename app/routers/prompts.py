@@ -15,8 +15,14 @@ from app.models.calendar_connection import CalendarConnection
 router = APIRouter(prefix="/api/agents/{agent_id}", tags=["prompts"])
 
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
+    history: list[ChatMessage] = []
 
 
 class ChatResponse(BaseModel):
@@ -84,9 +90,11 @@ def chat_with_agent(agent_id: int, data: ChatRequest, current_user: User = Depen
 
                 return {"error": "Unknown function"}
 
-            result = chat_completion_with_tools(prompt, data.message, tool_handler)
+            history = [{"role": m.role, "content": m.content} for m in data.history]
+            result = chat_completion_with_tools(prompt, data.message, tool_handler, history)
         else:
-            result = chat_completion(prompt, data.message)
+            history = [{"role": m.role, "content": m.content} for m in data.history]
+            result = chat_completion(prompt, data.message, history)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception:
