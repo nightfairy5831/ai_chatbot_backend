@@ -101,8 +101,11 @@ def check_availability(agent_id: int, req: AvailabilityRequest, current_user=Dep
     if not conn:
         raise HTTPException(status_code=404, detail="Calendar not connected")
 
-    slots = calendar_service.get_available_slots(conn.google_refresh_token, req.date, conn.calendar_id or "primary")
-    return slots
+    try:
+        slots = calendar_service.get_available_slots(conn.google_refresh_token, req.date, conn.calendar_id or "primary")
+        return slots
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to check availability. Please reconnect your Google Calendar.")
 
 
 @router.post("/agents/{agent_id}/book", response_model=BookingOut)
@@ -124,9 +127,12 @@ def book_appointment(agent_id: int, req: BookingRequest, current_user=Depends(ge
     if req.notes:
         description += f"\nNotes: {req.notes}"
 
-    event = calendar_service.create_event(
-        conn.google_refresh_token, req.date, req.time, summary, description, conn.calendar_id or "primary"
-    )
+    try:
+        event = calendar_service.create_event(
+            conn.google_refresh_token, req.date, req.time, summary, description, conn.calendar_id or "primary"
+        )
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to book appointment. Please reconnect your Google Calendar.")
 
     agent = db.query(Agent).filter(Agent.id == agent_id).first()
     owner = db.query(User).filter(User.id == conn.user_id).first()
@@ -161,7 +167,10 @@ def list_bookings(agent_id: int, current_user=Depends(get_current_user), db: Ses
     if not conn:
         raise HTTPException(status_code=404, detail="Calendar not connected")
 
-    events = calendar_service.list_events(conn.google_refresh_token, conn.calendar_id or "primary")
+    try:
+        events = calendar_service.list_events(conn.google_refresh_token, conn.calendar_id or "primary")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Failed to fetch bookings. Please reconnect your Google Calendar.")
     return [
         BookingOut(
             event_id=e["id"],

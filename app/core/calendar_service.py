@@ -66,8 +66,8 @@ def get_available_slots(refresh_token: str, date_str: str, calendar_id: str = "p
         start = event.get("start", {}).get("dateTime")
         end = event.get("end", {}).get("dateTime")
         if start and end:
-            s = datetime.fromisoformat(start).replace(tzinfo=None)
-            e = datetime.fromisoformat(end).replace(tzinfo=None)
+            s = datetime.fromisoformat(start.replace("Z", "+00:00")).replace(tzinfo=None)
+            e = datetime.fromisoformat(end.replace("Z", "+00:00")).replace(tzinfo=None)
             busy.append((s, e))
 
     date = datetime.strptime(date_str, "%Y-%m-%d")
