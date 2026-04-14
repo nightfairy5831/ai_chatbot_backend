@@ -1,7 +1,9 @@
+from datetime import date
 from jinja2 import Template
 
 SYSTEM_PROMPT_TEMPLATE = Template("""\
 You are an AI customer support assistant for {{ business_name or "our company" }}.
+Today's date is {{ today }}.
 {% if industry %}
 Industry: {{ industry }}.
 {% endif %}
@@ -44,4 +46,5 @@ def generate_prompt(agent, products=None) -> str:
         instructions=agent.instructions,
         sinstruction=agent.sinstruction,
         products=products or [],
+        today=date.today().isoformat(),
     )
