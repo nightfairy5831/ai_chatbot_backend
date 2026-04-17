@@ -2,16 +2,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, inspect
 from app.core.database import engine, Base
-from app.routers import auth, agents, products, prompts, admin
-from app.models.product import Product  # noqa: F401 — ensure table is created
-from app.models.question import Question  # noqa: F401 — ensure table is created
+from app.routers import auth, agents, products, prompts, admin, calendar
+from app.models.product import Product  # noqa: F401
+from app.models.question import Question  # noqa: F401
+from app.models.calendar_connection import CalendarConnection  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
 
 with engine.connect() as conn:
-    columns = [c["name"] for c in inspect(engine).get_columns("questions")]
-    if "token" not in columns:
+    question_columns = [c["name"] for c in inspect(engine).get_columns("questions")]
+    if "token" not in question_columns:
         conn.execute(text("ALTER TABLE questions ADD COLUMN token INTEGER DEFAULT 0"))
+        conn.commit()
+    if "source_channel" not in question_columns:
+        conn.execute(text("ALTER TABLE questions ADD COLUMN source_channel VARCHAR DEFAULT 'web'"))
+        conn.commit()
+
+    product_columns = [c["name"] for c in inspect(engine).get_columns("products")]
+    if "type" not in product_columns:
+        conn.execute(text("ALTER TABLE products ADD COLUMN type VARCHAR DEFAULT 'product'"))
+        conn.commit()
+    if "purchase_link" not in product_columns:
+        conn.execute(text("ALTER TABLE products ADD COLUMN purchase_link VARCHAR"))
         conn.commit()
 
 app = FastAPI(title="AI Chatbot SaaS")
@@ -29,6 +41,7 @@ app.include_router(agents.router)
 app.include_router(products.router)
 app.include_router(prompts.router)
 app.include_router(admin.router)
+app.include_router(calendar.router)
 
 
 @app.get("/api/health")
