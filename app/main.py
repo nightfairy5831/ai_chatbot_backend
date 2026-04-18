@@ -18,6 +18,11 @@ with engine.connect() as conn:
         conn.execute(text("ALTER TABLE questions ADD COLUMN source_channel VARCHAR DEFAULT 'web'"))
         conn.commit()
 
+    user_columns = [c["name"] for c in inspect(engine).get_columns("users")]
+    if "plan" not in user_columns:
+        conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR DEFAULT 'free'"))
+        conn.commit()
+
     product_columns = [c["name"] for c in inspect(engine).get_columns("products")]
     if "type" not in product_columns:
         conn.execute(text("ALTER TABLE products ADD COLUMN type VARCHAR DEFAULT 'product'"))

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.rate_limiter import check_rate_limit, PLAN_LIMITS
 from app.models.user import User
 from app.models.agent import Agent
 from app.models.product import Product
@@ -11,6 +12,12 @@ from app.models.question import Question
 from app.schemas.agent import AgentCreate, AgentUpdate, AgentOut
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
+
+
+@router.get("/usage")
+def get_usage(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    allowed, usage, limit = check_rate_limit(current_user.id, current_user.plan, db)
+    return {"plan": current_user.plan, "usage": usage, "limit": limit, "remaining": limit - usage}
 
 
 @router.get("/stats")
