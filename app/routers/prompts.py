@@ -7,6 +7,7 @@ from app.core.prompt_engine import generate_prompt
 from app.core.openai_service import chat_completion, chat_completion_with_tools
 from app.core import calendar_service
 from app.core.email_service import send_booking_confirmation
+from app.core.rate_limiter import check_rate_limit
 from app.models.user import User
 from app.models.agent import Agent
 from app.models.question import Question
@@ -49,6 +50,11 @@ def get_generated_prompt(agent_id: int, current_user: User = Depends(get_current
 @router.post("/chat", response_model=ChatResponse)
 def chat_with_agent(agent_id: int, data: ChatRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     agent = get_user_agent(agent_id, current_user, db)
+
+    allowed, usage, limit = check_rate_limit(current_user.id, current_user.plan, db)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Monthly message limit reached ({usage}/{limit}). Upgrade your plan.")
+
     prompt = generate_prompt(agent, agent.products)
 
     cal_conn = db.query(CalendarConnection).filter(

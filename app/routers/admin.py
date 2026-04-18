@@ -62,6 +62,7 @@ class ActivityLogOut(BaseModel):
 class UserRoleUpdate(BaseModel):
     role: str | None = None
     is_active: bool | None = None
+    plan: str | None = None
 
 
 class AdminChatRequest(BaseModel):
@@ -189,9 +190,13 @@ def update_user(user_id: int, data: UserRoleUpdate, admin: User = Depends(requir
         user.role = data.role
     if data.is_active is not None:
         user.is_active = data.is_active
+    if data.plan is not None:
+        if data.plan not in ("free", "starter", "professional", "business"):
+            raise HTTPException(status_code=400, detail="Invalid plan")
+        user.plan = data.plan
     db.commit()
     db.refresh(user)
-    return {"id": user.id, "username": user.username, "role": user.role, "is_active": user.is_active}
+    return {"id": user.id, "username": user.username, "role": user.role, "is_active": user.is_active, "plan": user.plan}
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
