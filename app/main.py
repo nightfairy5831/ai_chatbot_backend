@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, inspect
 from app.core.database import engine, Base
 from app.routers import auth, agents, products, prompts, admin, calendar, whatsapp
-from app.models.product import Productfrom app.models.question import Questionfrom app.models.calendar_connection import CalendarConnectionfrom app.models.whatsapp_number import WhatsappNumber
+from app.models.product import Product
+from app.models.question import Question
+from app.models.calendar_connection import CalendarConnection
+from app.models.whatsapp_number import WhatsappNumber
 Base.metadata.create_all(bind=engine)
 
 with engine.connect() as conn:
