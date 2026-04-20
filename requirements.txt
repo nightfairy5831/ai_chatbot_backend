@@ -13,3 +13,4 @@ PyPDF2==3.0.1
 python-multipart==0.0.20
 httpx==0.28.1
 resend==2.7.0
+twilio==9.5.1
