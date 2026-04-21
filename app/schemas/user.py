@@ -43,6 +43,7 @@ class UserOut(BaseModel):
     username: str
     email: str
     role: str = "client"
+    plan: str = "free"
     is_active: bool = True
 
     class Config:

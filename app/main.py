@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, inspect
 from app.core.database import engine, Base
-from app.routers import auth, agents, products, prompts, admin, calendar, whatsapp
+from app.routers import auth, agents, products, prompts, admin, calendar, whatsapp, stripe_billing
 from app.models.product import Product
 from app.models.question import Question
 from app.models.calendar_connection import CalendarConnection
@@ -21,6 +21,12 @@ with engine.connect() as conn:
     user_columns = [c["name"] for c in inspect(engine).get_columns("users")]
     if "plan" not in user_columns:
         conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR DEFAULT 'free'"))
+        conn.commit()
+    if "stripe_customer_id" not in user_columns:
+        conn.execute(text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR"))
+        conn.commit()
+    if "stripe_subscription_id" not in user_columns:
+        conn.execute(text("ALTER TABLE users ADD COLUMN stripe_subscription_id VARCHAR"))
         conn.commit()
 
     product_columns = [c["name"] for c in inspect(engine).get_columns("products")]
@@ -48,6 +54,7 @@ app.include_router(prompts.router)
 app.include_router(admin.router)
 app.include_router(calendar.router)
 app.include_router(whatsapp.router)
+app.include_router(stripe_billing.router)
 
 
 @app.get("/api/health")

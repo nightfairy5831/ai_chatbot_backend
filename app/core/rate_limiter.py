@@ -6,6 +6,8 @@ from app.models.question import Question
 PLAN_LIMITS = {
     "free": 50,
     "starter": 1000,
+    "growth": 5000,
+    "scale": 20000,
     "professional": 5000,
     "business": 20000,
     "admin": 999999,
